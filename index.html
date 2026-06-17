@@ -877,7 +877,7 @@ const TARGET_MAP = {
     16:'酥酥', 17:'師父', 18:'劉宇謙',19:'酥酥',20:'師父', 21:'劉宇謙',
     22:'酥酥', 23:'師父', 24:'劉宇謙',25:'團康',
     // 競賽題（全部團康）
-    26:'團康', 27:'團康', 28:'團康', 29:'團康', 30:'團康',
+    26:'團康', 27:'團康', 28:'團康', 29:'劉宇謙', 30:'團康',
     31:'團康', 32:'團康', 33:'團康', 34:'團康', 35:'團康',
     36:'團康'
 };
@@ -1011,31 +1011,69 @@ function shuffle(arr){
 
 // 均勻散布：團康題平均分散在 Grid 中，個人題填滿其餘格子
 function distributeOrder(){
-    const allIdx = [...Array(QUESTIONS.length).keys()];
-    const teamIdx    = shuffle(allIdx.filter(i=>(TARGET_MAP[QUESTIONS[i].id]||'團康')==='團康'));
-    const personalIdx = shuffle(allIdx.filter(i=>(TARGET_MAP[QUESTIONS[i].id]||'團康')!=='團康'));
+    const LABELS = ['酥酥','師父','劉宇謙','團康'];
+    const COLS   = 6, TOTAL = QUESTIONS.length;
+    const allIdx = [...Array(TOTAL).keys()];
 
-    const total = QUESTIONS.length;
-    const result = new Array(total).fill(-1);
-
-    // 以等間距 + 小幅隨機偏移，放置團康題
-    const teamCount = teamIdx.length;
-    for(let i=0; i<teamCount; i++){
-        const base   = Math.floor((i + 0.5) * total / teamCount);
-        const jitter = Math.floor(Math.random() * 3) - 1; // ±1 格隨機偏移
-        let pos = Math.max(0, Math.min(total - 1, base + jitter));
-        // 若該格已被佔用，往後找最近空位
-        let tries = 0;
-        while(result[pos] !== -1 && tries < total){ pos = (pos + 1) % total; tries++; }
-        result[pos] = teamIdx[i];
+    // 取得每個標籤對應的題目 index 池
+    function buildPools(){
+        const p = {};
+        LABELS.forEach(l => p[l] = shuffle(allIdx.filter(i=>(TARGET_MAP[QUESTIONS[i].id]||'團康')===l)));
+        return p;
     }
 
-    // 剩餘格子依序填入個人題
-    let pi = 0;
-    for(let i=0; i<total; i++){
-        if(result[i] === -1) result[i] = personalIdx[pi++];
+    // 貪婪建立標籤排列，不與左/上鄰格同標籤
+    function tryBuildLabelGrid(pool){
+        const rem   = {};
+        LABELS.forEach(l => rem[l] = pool[l].length);
+        const grid  = [];
+
+        for(let i = 0; i < TOTAL; i++){
+            const row = Math.floor(i / COLS);
+            const col = i % COLS;
+
+            const forbidden = new Set();
+            if(col > 0)    forbidden.add(grid[i - 1]);
+            if(row > 0)    forbidden.add(grid[i - COLS]);
+
+            // 優先選不衝突且剩餘數量較多的標籤（隨機排序避免偏向）
+            let available = shuffle(LABELS.filter(l => !forbidden.has(l) && rem[l] > 0));
+            // 若無可用則退回任意有剩餘的標籤
+            if(available.length === 0)
+                available = shuffle(LABELS.filter(l => rem[l] > 0));
+            if(available.length === 0) return null;
+
+            const chosen = available[0];
+            grid.push(chosen);
+            rem[chosen]--;
+        }
+        return grid;
     }
-    return result;
+
+    // 驗證是否完全無相鄰同標籤
+    function isValid(grid){
+        for(let i = 0; i < TOTAL; i++){
+            if(i % COLS > 0   && grid[i] === grid[i-1])    return false;
+            if(i >= COLS       && grid[i] === grid[i-COLS]) return false;
+        }
+        return true;
+    }
+
+    // 多次嘗試，取第一個完全有效的排列
+    let bestGrid = null;
+    for(let attempt = 0; attempt < 300; attempt++){
+        const pool = buildPools();
+        const grid = tryBuildLabelGrid(pool);
+        if(grid && isValid(grid)){ bestGrid = grid; break; }
+        if(!bestGrid && grid) bestGrid = grid; // 保留最佳退路
+    }
+    if(!bestGrid) return shuffle(allIdx); // 終極退路
+
+    // 將標籤排列轉為實際題目 index 陣列
+    const finalPool = buildPools();
+    const ptrs = {};
+    LABELS.forEach(l => ptrs[l] = 0);
+    return bestGrid.map(label => finalPool[label][ptrs[label]++]);
 }
 function startGame(){
     state={
