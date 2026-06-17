@@ -257,8 +257,35 @@
 
         /* ── bingo grid ── */
         .bingo-grid{
-            display:grid; grid-template-columns:repeat(6,1fr);
+            display:grid;
+            grid-template-columns:repeat(6,1fr);
             gap:8px; width:min(920px,97vw);
+        }
+
+        /* ── RWD：平板 4 欄 ── */
+        @media(max-width:899px){
+            .bingo-grid{
+                grid-template-columns:repeat(4,1fr);
+                width:min(700px,97vw);
+                gap:7px;
+            }
+            .cell-name{ font-size:clamp(.8rem,2.8vw,1rem); }
+            .cell-target{ font-size:clamp(.66rem,2vw,.82rem); }
+            .result-mark{ font-size:clamp(2rem,7vw,3rem); }
+        }
+
+        /* ── RWD：手機 3 欄 ── */
+        @media(max-width:479px){
+            .bingo-grid{
+                grid-template-columns:repeat(3,1fr);
+                width:98vw;
+                gap:5px;
+            }
+            .cell-name{ font-size:clamp(.72rem,3.5vw,.9rem); }
+            .cell-target{ font-size:clamp(.6rem,2.5vw,.75rem); }
+            .cell-num{ font-size:.58rem; }
+            .result-mark{ font-size:clamp(1.6rem,8vw,2.4rem); }
+            .cell-front,.cell-back{ padding:.3rem; }
         }
 
         /* card flip */
@@ -766,8 +793,9 @@ const QUESTIONS = [
     { id:18, icon:"🏀", category:"共同回憶",  type:"text",
       question:"國中籃球比賽時——\n・先發上場的五個人是誰？\n・最後贏了幾場？",
       answer:"先發五人：陳世瑜、朱信宇、陳俊翰、劉宇謙、馮國隆\n贏了：2 場" },
-    { id:19, icon:"🎮", category:"動漫知識",  type:"text",
+    { id:19, icon:"🎮", category:"動漫知識",  type:"photo",
       question:"神奇寶貝中——\n・小智在豐原地區第一隻收服的飛行系寶可夢是誰？\n・那個世代的御三家是哪一隻（草系）？",
+      photoHint:"請插入神奇寶貝相關圖片",
       answer:"飛行系：傲骨燕\n御三家草系：木守宮" },
     { id:20, icon:"⭐", category:"動漫知識",  type:"photo",
       question:"聖鬥士星矢中——\n・雙子座撒卡所使用的知名招式是什麼？\n・巨蟹座黑聖鬥士是被誰打敗的？",
