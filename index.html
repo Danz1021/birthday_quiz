@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎂 生日賓果猜題</title>
+    <style>
+        :root {
+            --bg:        #07071A;
+            --surface:   rgba(255,255,255,0.04);
+            --card:      rgba(255,255,255,0.07);
+            --card-h:    rgba(255,255,255,0.12);
+            --border:    rgba(255,255,255,0.1);
+            --border-h:  rgba(168,85,247,0.65);
+
+            --purple:    #A855F7;
+            --indigo:    #6366F1;
+            --cyan:      #22D3EE;
+            --pink:      #F472B6;
+
+            --grad:      linear-gradient(135deg,#F472B6,#A855F7,#22D3EE);
+            --grad-btn:  linear-gradient(135deg,#A855F7,#6366F1);
+            --grad-warm: linear-gradient(135deg,#F472B6,#FBBF24);
+
+            --ok:        #34D399;
+            --ok-dim:    rgba(52,211,153,0.13);
+            --err:       #F87171;
+            --err-dim:   rgba(248,113,113,0.13);
+            --gold:      #FBBF24;
+            --gold-dim:  rgba(251,191,36,0.13);
+
+            --t1: #F0EDFF;
+            --t2: #9B94C4;
+            --t3: #4A4680;
+
+            --susu:  #F472B6;
+            --shifu: #38BDF8;
+            --liu:   #34D399;
+            --all:   #FBBF24;
+
+            --r-sm:4px; --r-md:12px; --r-lg:18px; --r-xl:24px;
+        }
+
+        *{ margin:0; padding:0; box-sizing:border-box; }
+
+        body{
+            font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft JhengHei','PingFang TC',sans-serif;
+            background:var(--bg);
+            color:var(--t1);
+            min-height:100vh;
+            overflow-x:hidden;
+        }
+
+        /* ── animated blobs ── */
+        .bg-blobs{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+        .blob{
+            position:absolute; border-radius:50%;
+            filter:blur(90px); opacity:.18;
+            animation:blobDrift 12s ease-in-out infinite alternate;
+        }
+        .blob-1{ width:560px;height:560px; background:#A855F7; top:-120px;left:-120px; animation-delay:0s; }
+        .blob-2{ width:440px;height:440px; background:#22D3EE; bottom:-100px;right:-100px; animation-delay:-5s; }
+        .blob-3{ width:320px;height:320px; background:#F472B6; top:45%;left:50%; transform:translate(-50%,-50%); animation-delay:-9s; }
+        @keyframes blobDrift{
+            0%  { transform:translate(0,0)        scale(1); }
+            100%{ transform:translate(25px,-18px)  scale(1.12); }
+        }
+        .blob-3{ animation-name:blobDrift3; }
+        @keyframes blobDrift3{
+            0%  { transform:translate(-50%,-50%) scale(1); }
+            100%{ transform:translate(-50%,-50%) scale(1.14); }
+        }
+
+        /* ── screens ── */
+        .screen{ display:none; min-height:100vh; position:relative; z-index:1; }
+        .screen.active{
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+        }
+
+        /* ═══════ START SCREEN ═══════ */
+        #startScreen{ padding:2rem; text-align:center; }
+
+        .logo-mark{
+            width:76px; height:76px;
+            background:var(--grad);
+            border-radius:24px;
+            display:flex; align-items:center; justify-content:center;
+            font-size:2.4rem;
+            margin:0 auto 1.5rem;
+            box-shadow:0 0 50px rgba(168,85,247,.45), 0 8px 32px rgba(0,0,0,.5);
+        }
+
+        .game-title{
+            font-size:clamp(2rem,6vw,3.2rem);
+            font-weight:900; letter-spacing:-.03em;
+            background:var(--grad);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            background-clip:text;
+            animation:titleShimmer 4s linear infinite;
+            background-size:200% auto;
+        }
+        @keyframes titleShimmer{
+            0%  { background-position:0% center; }
+            100%{ background-position:200% center; }
+        }
+
+        .game-subtitle{ color:var(--t2); font-size:1rem; margin-bottom:1.8rem; }
+
+        .players-row{
+            display:flex; gap:.65rem;
+            justify-content:center; flex-wrap:wrap;
+            margin-bottom:1.8rem;
+        }
+        .player-chip{
+            background:var(--card); border:1px solid var(--border);
+            border-radius:50px; padding:.45rem 1.1rem;
+            font-size:.9rem; color:var(--t2);
+            display:flex; align-items:center; gap:.45rem;
+            backdrop-filter:blur(10px);
+        }
+        .pdot{
+            width:8px; height:8px; border-radius:50%;
+            flex-shrink:0;
+        }
+        .pdot-s{ background:var(--susu);  box-shadow:0 0 6px var(--susu); }
+        .pdot-f{ background:var(--shifu); box-shadow:0 0 6px var(--shifu); }
+        .pdot-l{ background:var(--liu);   box-shadow:0 0 6px var(--liu); }
+
+        .rules-card{
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--r-lg); padding:1.4rem 1.8rem;
+            max-width:460px; text-align:left; margin-bottom:2rem;
+            backdrop-filter:blur(14px);
+        }
+        .rules-title{
+            font-size:.72rem; color:var(--t3);
+            text-transform:uppercase; letter-spacing:.1em; margin-bottom:.9rem;
+        }
+        .rule-item{
+            display:flex; align-items:center; gap:.7rem;
+            padding:.48rem 0; color:var(--t2); font-size:.9rem;
+        }
+        .rule-item+.rule-item{ border-top:1px solid rgba(255,255,255,.05); }
+        .rule-icon{
+            width:30px; height:30px; border-radius:var(--r-sm);
+            display:flex; align-items:center; justify-content:center;
+            font-size:.95rem; flex-shrink:0;
+        }
+        .ri-p{ background:rgba(168,85,247,.2); }
+        .ri-c{ background:rgba(34,211,238,.15); }
+        .ri-g{ background:var(--ok-dim); }
+        .ri-r{ background:var(--err-dim); }
+        .ri-y{ background:var(--gold-dim); }
+
+        .start-btn{
+            padding:.95rem 3.5rem; font-size:1.05rem; font-weight:700;
+            background:var(--grad-btn); border:none; border-radius:50px;
+            color:#fff; cursor:pointer; font-family:inherit;
+            transition:all .2s; letter-spacing:.02em;
+            box-shadow:0 0 35px rgba(168,85,247,.45);
+        }
+        .start-btn:hover{
+            transform:translateY(-2px);
+            box-shadow:0 0 55px rgba(168,85,247,.65);
+        }
+
+        /* ═══════ GRID SCREEN ═══════ */
+        #gridScreen{
+            padding:1.5rem; gap:1.1rem;
+            justify-content:flex-start; padding-top:1.8rem;
+        }
+        .grid-header{ text-align:center; width:100%; }
+        .grid-title{
+            font-size:1.3rem; font-weight:800;
+            background:var(--grad);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            background-clip:text; margin-bottom:.7rem;
+        }
+
+        /* mute button */
+        .mute-btn{
+            position:fixed; top:1rem; right:1rem; z-index:200;
+            background:var(--card); border:1px solid var(--border);
+            border-radius:50%; width:40px; height:40px;
+            display:none; align-items:center; justify-content:center;
+            cursor:pointer; font-size:1.1rem;
+            transition:all .2s; backdrop-filter:blur(10px);
+        }
+        .mute-btn:hover{ border-color:var(--border-h); }
+
+        .stats-row{
+            display:flex; gap:.6rem;
+            justify-content:center; flex-wrap:wrap;
+        }
+        .stat-chip{
+            background:var(--card); border:1px solid var(--border);
+            border-radius:50px; padding:.32rem .9rem;
+            font-size:.82rem; color:var(--t2);
+            display:flex; align-items:center; gap:.35rem;
+            backdrop-filter:blur(8px);
+        }
+        .stat-chip b{ color:var(--t1); }
+        .line-dots{ display:flex; gap:5px; align-items:center; }
+        .ldot{
+            width:9px; height:9px; border-radius:50%;
+            border:2px solid var(--border); background:transparent;
+            transition:all .35s;
+        }
+        .ldot.filled{
+            background:var(--gold); border-color:var(--gold);
+            box-shadow:0 0 9px var(--gold);
+        }
+
+        /* ── fail board ── */
+        .fail-board{
+            display:flex; gap:.5rem;
+            justify-content:center; flex-wrap:wrap;
+            margin-top:.5rem;
+        }
+        .fail-chip{
+            background:var(--card); border:1px solid var(--border);
+            border-radius:50px; padding:.32rem 1rem;
+            font-size:.82rem; color:var(--t2);
+            display:flex; align-items:center; gap:.45rem;
+            backdrop-filter:blur(8px);
+            transition:border-color .35s, box-shadow .35s;
+        }
+        .fail-chip.worst{
+            border-color:rgba(248,113,113,.65);
+            box-shadow:0 0 16px rgba(248,113,113,.28);
+        }
+        .fail-name{ font-weight:600; }
+        .fail-sep{ color:var(--t3); font-size:.75rem; }
+        .fail-count{
+            font-size:1.1rem; font-weight:800; color:var(--t1);
+            min-width:1ch; text-align:center;
+            transition:color .3s;
+        }
+        .fail-count.has-err{ color:var(--err); }
+        @keyframes countBump{
+            0%  { transform:scale(1); }
+            45% { transform:scale(1.5); }
+            100%{ transform:scale(1); }
+        }
+        .fail-count.bump{ animation:countBump .38s cubic-bezier(.34,1.56,.64,1); }
+
+        /* ── fail king (win screen) ── */
+        .fail-king-box{
+            background:var(--err-dim);
+            border:1px solid rgba(248,113,113,.35);
+            border-radius:var(--r-lg);
+            padding:.7rem 2rem; margin-bottom:1.2rem;
+            text-align:center;
+        }
+        .fail-king-text{ font-size:1rem; font-weight:700; color:var(--err); }
+
+        /* ── bingo grid ── */
+        .bingo-grid{
+            display:grid; grid-template-columns:repeat(6,1fr);
+            gap:8px; width:min(920px,97vw);
+        }
+
+        /* card flip */
+        .grid-cell{
+            aspect-ratio:1;
+            perspective:700px;
+            cursor:pointer;
+        }
+        .grid-cell.answered{ cursor:default; }
+
+        .cell-inner{
+            width:100%; height:100%;
+            position:relative;
+            transform-style:preserve-3d;
+            transition:transform .55s cubic-bezier(.4,0,.2,1);
+            border-radius:var(--r-md);
+        }
+        .cell-inner.flipped{ transform:rotateY(180deg); }
+
+        .cell-front,.cell-back{
+            position:absolute; inset:0;
+            border-radius:var(--r-md);
+            backface-visibility:hidden;
+            -webkit-backface-visibility:hidden;
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            padding:.45rem; text-align:center;
+        }
+        .cell-front{
+            background:var(--card);
+            border:1px solid var(--border);
+            transition:border-color .2s, background .2s, box-shadow .2s;
+        }
+        .grid-cell:not(.answered):hover .cell-front{
+            border-color:var(--purple);
+            background:var(--card-h);
+            box-shadow:0 0 22px rgba(168,85,247,.3), inset 0 0 18px rgba(168,85,247,.06);
+        }
+        .cell-back{
+            transform:rotateY(180deg);
+        }
+        .cell-back.correct{
+            background:var(--ok-dim);
+            border:2px solid rgba(52,211,153,.55);
+        }
+        .cell-back.wrong{
+            background:var(--err-dim);
+            border:2px solid rgba(248,113,113,.45);
+        }
+
+        .cell-num{
+            position:absolute; top:5px; left:6px;
+            font-size:.7rem; color:var(--t3); font-weight:600;
+        }
+        .cell-name{
+            font-size:clamp(.88rem,2.3vw,1.15rem);
+            font-weight:700; color:var(--t1); line-height:1.4;
+        }
+        .cell-target{
+            font-size:clamp(.72rem,1.8vw,.92rem); font-weight:700;
+            margin-top:.3rem; padding:.16rem .52rem;
+            border-radius:4px; line-height:1.2;
+        }
+        .ct-susu { background:rgba(244,114,182,.22); color:var(--susu); }
+        .ct-shifu{ background:rgba(56,189,248,.2);   color:var(--shifu); }
+        .ct-liu  { background:rgba(52,211,153,.2);   color:var(--liu); }
+        .ct-all  { background:var(--gold-dim);        color:var(--gold); }
+
+        .result-mark{ font-size:clamp(2.4rem,6vw,3.4rem); }
+
+        .grid-cell.win-hl .cell-back{
+            animation:winGlow .8s ease-in-out infinite alternate;
+        }
+        @keyframes winGlow{
+            from{ box-shadow:0 0 8px var(--gold); border-color:var(--gold); }
+            to  { box-shadow:0 0 30px var(--gold),0 0 55px rgba(251,191,36,.3); border-color:#fff; }
+        }
+
+        /* ═══════ QUESTION OVERLAY ═══════ */
+        #questionOverlay{
+            position:fixed; inset:0;
+            background:rgba(4,3,18,.9);
+            backdrop-filter:blur(22px);
+            display:none; align-items:center; justify-content:center;
+            z-index:500; padding:1.5rem;
+        }
+        #questionOverlay.open{ display:flex; animation:olIn .22s ease; }
+        @keyframes olIn{ from{opacity:0}to{opacity:1} }
+
+        .q-card{
+            background:rgba(12,9,38,.92);
+            border-radius:var(--r-xl);
+            border:1px solid rgba(168,85,247,.35);
+            box-shadow:0 0 70px rgba(168,85,247,.18), 0 24px 80px rgba(0,0,0,.75);
+            padding:1.5rem 2rem 1.75rem;
+            width:min(620px,95vw); max-height:90vh; overflow-y:auto;
+            position:relative;
+            animation:cardPop .25s cubic-bezier(.34,1.56,.64,1);
+        }
+        @keyframes cardPop{
+            from{transform:scale(.9);opacity:0}
+            to  {transform:scale(1);opacity:1}
+        }
+
+        .q-close{
+            position:absolute; top:.9rem; right:.9rem;
+            background:var(--card); border:1px solid var(--border);
+            color:var(--t3); font-size:.9rem;
+            width:30px; height:30px; border-radius:var(--r-sm);
+            cursor:pointer; font-family:inherit; transition:all .15s;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .q-close:hover{ background:var(--err-dim); border-color:var(--err); color:var(--err); }
+
+        /* ── timer ── */
+        .timer-wrap{
+            display:flex; align-items:center; justify-content:center;
+            gap:.9rem; margin-bottom:1.2rem;
+        }
+        .timer-ring{ position:relative; width:64px; height:64px; flex-shrink:0; }
+        .timer-svg{ width:64px; height:64px; transform:rotate(-90deg); }
+        .timer-track{ fill:none; stroke:rgba(255,255,255,.08); stroke-width:5; }
+        .timer-fill{
+            fill:none; stroke:var(--ok); stroke-width:5; stroke-linecap:round;
+            stroke-dasharray:163.36;
+            stroke-dashoffset:0;
+            transition:stroke-dashoffset 1s linear, stroke .4s;
+        }
+        .timer-num{
+            position:absolute; inset:0;
+            display:flex; align-items:center; justify-content:center;
+            font-size:1.3rem; font-weight:800; color:var(--t1);
+        }
+        .timer-wrap.urgent .timer-ring{
+            animation:timerPulse .45s ease-in-out infinite alternate;
+        }
+        @keyframes timerPulse{
+            from{ transform:scale(1); }
+            to  { transform:scale(1.1); }
+        }
+        .timer-timeout{
+            font-size:.88rem; font-weight:700; color:var(--err);
+            background:var(--err-dim); border:1px solid rgba(248,113,113,.35);
+            border-radius:var(--r-sm); padding:.35rem .8rem;
+            display:none; animation:fadeUp .3s ease;
+        }
+        .timer-timeout.show{ display:block; }
+        @keyframes fadeUp{
+            from{opacity:0;transform:translateY(6px)}
+            to  {opacity:1;transform:translateY(0)}
+        }
+
+        /* ── question content ── */
+        .q-header{
+            display:flex; align-items:center; gap:.6rem;
+            margin-bottom:1rem; flex-wrap:wrap; padding-right:2.2rem;
+        }
+        .badge{
+            display:inline-flex; align-items:center; gap:.28rem;
+            border-radius:50px; padding:.22rem .8rem;
+            font-size:.75rem; font-weight:600;
+        }
+        .badge-type{
+            background:rgba(168,85,247,.16);
+            border:1px solid rgba(168,85,247,.38);
+            color:var(--purple);
+        }
+        .badge-special{
+            background:var(--gold-dim);
+            border:1px solid rgba(251,191,36,.32);
+            color:var(--gold);
+        }
+        .q-cat{ font-size:.8rem; color:var(--t3); font-weight:500; }
+
+        .q-text{
+            font-size:clamp(.98rem,2.6vw,1.25rem);
+            font-weight:600; line-height:1.75;
+            margin-bottom:1.1rem; color:var(--t1); white-space:pre-line;
+        }
+
+        .q-photo-img{
+            width:100%; max-height:300px;
+            object-fit:contain;
+            border-radius:var(--r-md);
+            margin:.7rem 0;
+            display:block;
+        }
+        .q-placeholder{
+            background:var(--card); border:2px dashed rgba(255,255,255,.1);
+            border-radius:var(--r-md); padding:1.8rem;
+            text-align:center; margin:1rem 0; color:var(--t3);
+        }
+        .q-placeholder .ph-icon{ font-size:2.2rem; margin-bottom:.4rem; }
+        .q-placeholder .ph-label{ font-size:.88rem; font-weight:600; color:var(--t2); }
+        .q-placeholder .ph-hint{ font-size:.76rem; margin-top:.22rem; }
+
+        .q-choices{
+            display:grid; grid-template-columns:1fr 1fr;
+            gap:.55rem; margin:1rem 0;
+        }
+        .q-choice{
+            padding:.7rem .9rem;
+            border:1px solid var(--border); background:var(--card);
+            border-radius:var(--r-sm); color:var(--t2);
+            font-size:.88rem; line-height:1.4;
+            transition:border-color .15s, background .15s;
+        }
+        .q-choice:hover{ border-color:rgba(168,85,247,.5); background:var(--card-h); }
+
+        .q-ans{
+            background:var(--ok-dim); border:1px solid rgba(52,211,153,.4);
+            border-radius:var(--r-md); padding:.95rem 1.1rem;
+            margin-top:1.1rem; display:none;
+            animation:fadeUp .3s ease;
+        }
+        .q-ans.show{ display:block; }
+        .ans-label{
+            font-size:.72rem; color:var(--ok); font-weight:600;
+            text-transform:uppercase; letter-spacing:.07em; margin-bottom:.35rem;
+        }
+        .ans-text{ font-size:1rem; font-weight:600; white-space:pre-line; color:var(--t1); }
+
+        .q-actions{ display:flex; gap:.55rem; margin-top:1.4rem; }
+        .btn{
+            flex:1; padding:.78rem; border:none; border-radius:var(--r-md);
+            font-size:.92rem; font-weight:700; cursor:pointer;
+            transition:transform .15s, box-shadow .15s; font-family:inherit;
+        }
+        .btn:hover{ transform:translateY(-1px); }
+        .btn-reveal{
+            background:var(--grad-btn); color:#fff;
+            box-shadow:0 4px 16px rgba(168,85,247,.35);
+        }
+        .btn-reveal:hover{ box-shadow:0 6px 28px rgba(168,85,247,.55); }
+        .btn-ok{
+            background:linear-gradient(135deg,#34D399,#059669); color:#fff; display:none;
+            box-shadow:0 4px 16px rgba(52,211,153,.3);
+        }
+        .btn-ok:hover{ box-shadow:0 6px 28px rgba(52,211,153,.5); }
+        .btn-ng{
+            background:linear-gradient(135deg,#F87171,#DC2626); color:#fff; display:none;
+            box-shadow:0 4px 16px rgba(248,113,113,.3);
+        }
+        .btn-ng:hover{ box-shadow:0 6px 28px rgba(248,113,113,.5); }
+        .btn-ok.show,.btn-ng.show{ display:block; }
+
+        /* ═══════ WIN SCREEN ═══════ */
+        #winScreen{ text-align:center; padding:2rem; }
+        .win-icon{
+            font-size:4.5rem;
+            animation:bounce 1.2s ease-in-out infinite alternate;
+            filter:drop-shadow(0 0 22px rgba(251,191,36,.65));
+        }
+        @keyframes bounce{
+            from{transform:translateY(0) scale(1)}
+            to  {transform:translateY(-14px) scale(1.06)}
+        }
+        .win-title{
+            font-size:clamp(2.5rem,8vw,4rem);
+            font-weight:900; letter-spacing:-.03em;
+            background:linear-gradient(135deg,#FBBF24,#F472B6,#A855F7);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            background-clip:text; margin:.4rem 0;
+        }
+        .win-sub{ font-size:1rem; color:var(--t2); margin-bottom:.8rem; }
+        .win-lines{
+            display:flex; gap:.45rem;
+            justify-content:center; flex-wrap:wrap; margin-bottom:2rem;
+        }
+        .win-chip{
+            background:var(--gold-dim); border:1px solid rgba(251,191,36,.3);
+            border-radius:50px; padding:.38rem 1rem;
+            font-size:.85rem; color:var(--gold); font-weight:600;
+        }
+        .win-btns{ display:flex; gap:.7rem; justify-content:center; flex-wrap:wrap; }
+        .btn-restart{
+            padding:.85rem 2.4rem; font-size:.98rem; font-weight:700;
+            background:var(--grad-btn); border:none; border-radius:50px;
+            color:#fff; cursor:pointer; font-family:inherit;
+            transition:all .2s; box-shadow:0 0 28px rgba(168,85,247,.45);
+        }
+        .btn-restart:hover{ transform:translateY(-2px); box-shadow:0 0 44px rgba(168,85,247,.65); }
+        .btn-back{
+            padding:.85rem 2.4rem; font-size:.98rem; font-weight:600;
+            background:var(--card); border:1px solid var(--border);
+            border-radius:50px; color:var(--t2);
+            cursor:pointer; font-family:inherit; transition:all .2s;
+        }
+        .btn-back:hover{ border-color:rgba(168,85,247,.5); color:var(--t1); }
+
+        canvas#confettiCanvas{ position:fixed; inset:0; pointer-events:none; z-index:999; }
+
+        ::-webkit-scrollbar{ width:5px; }
+        ::-webkit-scrollbar-track{ background:rgba(255,255,255,.02); }
+        ::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.1); border-radius:3px; }
+
+        @media(max-width:480px){
+            .q-card{ padding:1.5rem 1.2rem 1.25rem; }
+            .q-choices{ grid-template-columns:1fr; }
+            .q-actions{ flex-direction:column; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+</div>
+
+<canvas id="confettiCanvas" style="display:none"></canvas>
+<button class="mute-btn" id="muteBtn" onclick="toggleMute()">🔊</button>
+
+<!-- ════════ START ════════ -->
+<div id="startScreen" class="screen active">
+    <div class="logo-mark">🎂</div>
+    <div class="game-title">生日賓果猜題</div>
+    <p class="game-subtitle">三條連線獲勝 · 主持人操作 · 現場作答</p>
+
+    <div class="players-row">
+        <div class="player-chip"><span class="pdot pdot-s"></span>酥酥</div>
+        <div class="player-chip"><span class="pdot pdot-f"></span>師父</div>
+        <div class="player-chip"><span class="pdot pdot-l"></span>劉宇謙</div>
+    </div>
+
+    <div class="rules-card">
+        <div class="rules-title">遊戲規則</div>
+        <div class="rule-item"><div class="rule-icon ri-p">🎯</div><span>點選格子，主持人出題作答</span></div>
+        <div class="rule-item"><div class="rule-icon ri-c">⏱️</div><span>每題限時 30 秒，時間到自動揭曉答案</span></div>
+        <div class="rule-item"><div class="rule-icon ri-y">👥</div><span>標有「三人一致」的題，三人答案需相同才得分</span></div>
+        <div class="rule-item"><div class="rule-icon ri-g">⭕</div><span>答對 → 格子翻面標記 ⭕</span></div>
+        <div class="rule-item"><div class="rule-icon ri-r">❌</div><span>答錯 → 格子翻面標記 ❌</span></div>
+        <div class="rule-item"><div class="rule-icon ri-y">🏆</div><span>完成三條連線（橫 / 直 / 斜）→ 賓果獲勝！</span></div>
+    </div>
+
+    <button class="start-btn" onclick="startGame()">開始遊戲</button>
+</div>
+
+<!-- ════════ GRID ════════ -->
+<div id="gridScreen" class="screen">
+    <div class="grid-header">
+        <div class="grid-title">🎂 生日賓果猜題板</div>
+        <div class="stats-row">
+            <div class="stat-chip">完成 <b id="doneCount">0</b>/36</div>
+            <div class="stat-chip">⭕ <b id="correctCount">0</b></div>
+            <div class="stat-chip">❌ <b id="wrongCount">0</b></div>
+        </div>
+        <div class="fail-board">
+            <div class="fail-chip" id="failChip-susu">
+                <span class="pdot pdot-s"></span>
+                <span class="fail-name">酥酥</span>
+                <span class="fail-count" id="failCount-susu">0</span>
+                <span class="fail-sep">題答錯</span>
+            </div>
+            <div class="fail-chip" id="failChip-shifu">
+                <span class="pdot pdot-f"></span>
+                <span class="fail-name">師父</span>
+                <span class="fail-count" id="failCount-shifu">0</span>
+                <span class="fail-sep">題答錯</span>
+            </div>
+            <div class="fail-chip" id="failChip-liu">
+                <span class="pdot pdot-l"></span>
+                <span class="fail-name">劉宇謙</span>
+                <span class="fail-count" id="failCount-liu">0</span>
+                <span class="fail-sep">題答錯</span>
+            </div>
+        </div>
+    </div>
+    <div class="bingo-grid" id="bingoGrid"></div>
+</div>
+
+<!-- ════════ QUESTION OVERLAY ════════ -->
+<div id="questionOverlay">
+    <div class="q-card">
+        <button class="q-close" onclick="closeQuestion()">✕</button>
+
+        <div class="timer-wrap" id="timerWrap">
+            <div class="timer-ring">
+                <svg class="timer-svg" viewBox="0 0 60 60">
+                    <circle class="timer-track" cx="30" cy="30" r="26"/>
+                    <circle class="timer-fill" id="timerCircle" cx="30" cy="30" r="26"/>
+                </svg>
+                <div class="timer-num" id="timerNum">30</div>
+            </div>
+            <div class="timer-timeout" id="timerTimeout">⏱️ 時間到！</div>
+        </div>
+
+        <div class="q-header">
+            <div id="qTypeBadge" class="badge badge-type">💬 文字題</div>
+            <div id="qSpecialBadge" class="badge badge-special" style="display:none">👥 三人一致</div>
+            <div id="qCategory" class="q-cat"></div>
+        </div>
+
+        <div id="qText" class="q-text"></div>
+
+        <img id="qPhotoImg" class="q-photo-img" style="display:none" alt="題目圖片" />
+        <div id="qPhotoPH" class="q-placeholder" style="display:none">
+            <div class="ph-icon">🖼️</div>
+            <div class="ph-label">圖片區域</div>
+            <div class="ph-hint" id="qPhotoPHHint"></div>
+        </div>
+        <div id="qVideoPH" class="q-placeholder" style="display:none">
+            <div class="ph-icon">🎬</div>
+            <div class="ph-label">影片區域</div>
+            <div class="ph-hint" id="qVideoPHHint"></div>
+        </div>
+
+        <div id="qChoices" class="q-choices" style="display:none"></div>
+
+        <div id="qAnsBox" class="q-ans">
+            <div class="ans-label">正確答案</div>
+            <div id="qAnsText" class="ans-text"></div>
+        </div>
+
+        <div class="q-actions">
+            <button class="btn btn-reveal" id="btnReveal" onclick="revealAnswer()">揭示答案</button>
+            <button class="btn btn-ok" id="btnOk" onclick="markResult(true)">答對了 ⭕</button>
+            <button class="btn btn-ng" id="btnNg" onclick="markResult(false)">答錯了 ❌</button>
+        </div>
+    </div>
+</div>
+
+<!-- ════════ WIN SCREEN ════════ -->
+<div id="winScreen" class="screen">
+    <div class="win-icon">🏆</div>
+    <div class="win-title">賓果！</div>
+    <div class="win-sub">三條連線完成，恭喜獲勝！🎉</div>
+    <div id="failKingBox" class="fail-king-box" style="display:none">
+        <div id="failKingText" class="fail-king-text"></div>
+    </div>
+    <div id="winLines" class="win-lines"></div>
+    <div class="win-btns">
+        <button class="btn-back" onclick="goBackGrid()">回到題板</button>
+        <button class="btn-restart" onclick="restartGame()">再玩一次</button>
+    </div>
+</div>
+
+<script src="./question_images.js"></script>
+<script>
+// ════════════════════════════════════════════════
+//               QUESTION DATA
+// ════════════════════════════════════════════════
+const QUESTIONS = [
+    { id:1,  icon:"💑", category:"互動猜人",  type:"text",        special:true,
+      question:"依照不同線索描述，猜出這是酥酥的哪一個「已知」女友？\n\n三人要給出相同的答案才算得分。",
+      answer:"主持人依題庫線索提示，三人說出同一個名字即得分" },
+    { id:2,  icon:"🔍", category:"互動猜人",  type:"text",        special:true,
+      question:"依照不同的線索描述，猜出國中的某一個人（不限同班）。\n\n三人要給出相同的答案才算得分。",
+      answer:"老何" },
+    { id:3,  icon:"👤", category:"互動猜人",  type:"text",        special:true,
+      question:"依照不同線索描述，猜出「阿珊」的五官特徵。\n\n三人要給出相同的描述才算得分。",
+      answer:"主持人依題庫描述提示，三人說出相同的五官描述即得分" },
+    { id:4,  icon:"🤸", category:"互動遊戲",  type:"interactive",
+      question:"由主辦方出題，請三位使用比手畫腳方式傳遞給夥伴，進行兩輪來回。\n\n最後頭尾兩個人需說出：\n・是什麼角色？\n・在做什麼事？",
+      answer:"主持人自由判定！頭尾兩人說出相同的角色與動作即得分 🎭" },
+    { id:5,  icon:"🎬", category:"共同回憶",  type:"video",
+      question:"請詳細觀看這部影片，並回答主辦方提出的出遊細節題目。",
+      videoHint:"請在此處插入出遊影片檔案",
+      answer:"（主辦方依影片內容出題，答案請提前準備好）" },
+    { id:6,  icon:"👶", category:"共同回憶",  type:"photo",
+      question:"由左到右猜出三位壽星誰是誰？",
+      photoHint:"三位壽星小時候合照",
+      answer:"師父、酥酥、劉宇謙" },
+    { id:7,  icon:"📱", category:"IG 社群",   type:"choice",
+      question:"酥酥的 IG 精選，三個韓團從左到右的排序是？",
+      choices:["A．TWICE → aespa → BOL4","B．aespa → TWICE → BOL4","C．aespa → BOL4 → TWICE","D．BOL4 → aespa → TWICE"],
+      answer:"B．aespa → TWICE → BOL4" },
+    { id:8,  icon:"📲", category:"IG 社群",   type:"choice",
+      question:"目前在場的人裡，有誰不是你（師父）的 IG 粉絲？",
+      choices:["A．Sunny","B．熱狗","C．阿珊","D．老劉"],
+      answer:"B．熱狗" },
+    { id:9,  icon:"📸", category:"IG 社群",   type:"choice",
+      question:"阿珊的 IG 2025 年貼文中，誰沒有出現正臉？",
+      choices:["A．熱狗","B．鴻感","C．老鄭","D．老酥"],
+      answer:"B．鴻感" },
+    { id:10, icon:"🎌", category:"共同回憶",  type:"text",
+      question:"高中時期，跟老鄭常討論的那部日劇叫什麼名字？\n男主角叫什麼名字？\n那首經典主題曲是什麼？",
+      answer:"日劇：《求婚大作戰》\n男主角：山下智久\n主題曲：《明日晴》" },
+    { id:11, icon:"🏖️", category:"共同回憶",  type:"text",
+      question:"大學時期去墾丁玩，要去海邊時——\n・是誰開車的？\n・副駕是誰？\n・發生什麼事導致大家都醒了？",
+      answer:"開車：師父\n副駕：鄭玄\n事件：轉彎差點衝進別人家裡" },
+    { id:12, icon:"🏔️", category:"共同回憶",  type:"text",
+      question:"大學時期去花蓮玩，回程時——\n・走哪條公路回去？\n・為什麼要多過一夜？\n・在哪個區域過的夜？",
+      answer:"公路：中橫公路\n原因：颱風封路\n過夜地點：清境" },
+    { id:13, icon:"🖼️", category:"共同回憶",  type:"photo",
+      question:"（看圖）請猜出這是跟誰去哪裡玩？住在哪裡？",
+      photoHint:"請插入旅遊照片（高雄 / 85大樓）",
+      answer:"同行：鄭玄\n地點：高雄\n住宿：85大樓" },
+    { id:14, icon:"🗺️", category:"共同回憶",  type:"photo",
+      question:"（看圖）請猜出這是去哪裡玩？大概是什麼時候？",
+      photoHint:"請插入旅遊照片（台南 / 十月）",
+      answer:"地點：台南\n時間：十月" },
+    { id:15, icon:"👥", category:"共同回憶",  type:"photo",
+      question:"（看圖）請依照照片，從左到右說出這五個人的名字\n（不含死豬）",
+      photoHint:"請插入對應的團體合照",
+      answer:"從左到右：劉 → 鄭 → 蘇 → 熱狗 → 師父" },
+    { id:16, icon:"⚔️", category:"歷史知識",  type:"text",
+      question:"・張昭在赤壁之戰前主張什麼策略？\n・諸葛亮口中的「厚顏無恥之徒」，是王朗還是王允？",
+      answer:"張昭主張：投降曹操\n厚顏無恥之徒：王朗（非王允）" },
+    { id:17, icon:"🐱", category:"個人相關",  type:"choice",
+      question:"劉宇謙家裡的貓叫什麼名字？",
+      choices:["A．肥肥","B．球球","C．咪咪","D．肥仔"],
+      answer:"（主辦方提前確認正確答案後，請填入此處）" },
+    { id:18, icon:"🏀", category:"共同回憶",  type:"text",
+      question:"國中籃球比賽時——\n・先發上場的五個人是誰？\n・最後贏了幾場？",
+      answer:"先發五人：陳世瑜、朱信宇、陳俊翰、劉宇謙、馮國隆\n贏了：2 場" },
+    { id:19, icon:"🎮", category:"動漫知識",  type:"text",
+      question:"神奇寶貝中——\n・小智在豐原地區第一隻收服的飛行系寶可夢是誰？\n・那個世代的御三家是哪一隻（草系）？",
+      answer:"飛行系：傲骨燕\n御三家草系：木守宮" },
+    { id:20, icon:"⭐", category:"動漫知識",  type:"photo",
+      question:"聖鬥士星矢中——\n・雙子座撒卡所使用的知名招式是什麼？\n・巨蟹座黑聖鬥士是被誰打敗的？",
+      photoHint:"請插入聖鬥士星矢相關圖片",
+      answer:"撒卡招式：銀河星爆（Galaxian Explosion）\n打敗巨蟹座：紫龍" },
+    { id:21, icon:"🏀", category:"動漫知識",  type:"photo",
+      question:"玩具櫃內的灌籃高手模型——\n・從左到右 1～5，宮城良田排在第幾？\n・他是左手持球還是右手持球？",
+      photoHint:"請插入玩具櫃灌籃高手模型的照片",
+      answer:"宮城排序：第 4 位\n持球：右手" },
+    { id:22, icon:"🍥", category:"動漫知識",  type:"photo",
+      question:"火影忍者中——\n・鳴人還沒成為下忍前，偷了什麼禁術卷軸？\n・哪個人用背部幫他擋下了大型手裡劍？",
+      photoHint:"請插入火影忍者相關圖片",
+      answer:"禁術：多重影分身之術\n擋手裡劍的人：伊魯卡老師" },
+    { id:23, icon:"☠️", category:"動漫知識",  type:"photo",
+      question:"死神（BLEACH）中——\n・友哈巴赫是從「過去」還是「未來」摧毀了一護的斬月？\n・那為什麼後來斬月又好了？",
+      photoHint:"請插入死神相關圖片",
+      answer:"摧毀時間：從未來\n復原原因：月島秀勝從「過去」植入了斬月沒有斷裂的片段" },
+    { id:24, icon:"⚓", category:"動漫知識",  type:"photo",
+      question:"航海王中，名字帶有「D」的角色，請說出至少五位！",
+      photoHint:"請插入航海王相關圖片",
+      answer:"可接受答案（共8位）：\n・蒙其 D 魯夫\n・哥爾 D 羅傑\n・波特卡斯 D 艾斯\n・馬歇爾 D 汀奇\n・哈古瓦爾 D 薩烏羅\n・蒙其 D 卡普\n・蒙其 D 多拉格\n・奈菲魯塔利 D 莉莉" },
+    { id:25, icon:"😈", category:"互動遊戲",  type:"interactive",
+      question:"⏱️ 限時 30 秒！\n\n請說出李岳鴻的「十大惡行」，不可以重複！\n\n主持人計時，說滿十條即得分 👿",
+      answer:"主持人自由判定！\n30 秒內說出 10 條不重複的惡行即得分 😂" },
+
+    // ── 競賽題（題庫擴充）──
+    { id:26, icon:"📱", category:"現代生活",  type:"team",
+      question:"三位壽星一起討論：\n\n李岳鴻「今天」最常用的 APP 是什麼？\n\n限時 60 秒討論，三人說出同一個答案，由李岳鴻本人裁定！",
+      answer:"三人答案一致 + 李岳鴻本人點頭確認 → ⭕\n任一條件不符 → ❌" },
+
+    { id:27, icon:"💘", category:"師父理想型", type:"team",
+      question:"由李岳鴻從 IG 找出一張女生照片。\n\n酥酥與劉宇謙各自不討論，秘密判斷：\n「這是否為師父的理想型？」\n\n條件：\n・兩人答案必須一致\n・師父本人點頭確認\n兩個條件都要達成才得分！",
+      answer:"酥酥 + 劉宇謙答案一致，且師父確認 → ⭕\n任一條件不符 → ❌" },
+
+    { id:28, icon:"🎯", category:"Sunny 出題",  type:"team",
+      question:"由 Sunny 隨機出一道題目（無指定範圍）。\n\nSunny 指定一名壽星回答。\n\n答案必須讓 Sunny 滿意才算答對！\nSunny 擁有最終裁判權 👑",
+      answer:"Sunny 滿意 → ⭕\nSunny 不滿意 → ❌" },
+
+    { id:29, icon:"🤥", category:"真話假話",   type:"team",
+      question:"阿珊 悄悄告訴 馮國隆 三句話：\n・兩句是只有劉宇謙才知道的真話\n・一句是假話\n\n馮國隆轉述後，劉宇謙必須猜出哪一句是假話！",
+      answer:"劉宇謙猜對假話 → ⭕\n猜錯 → ❌" },
+
+    { id:30, icon:"🐢", category:"人體烏龜翹", type:"team",
+      question:"由客隊一人擔任「館主」。\n\n規則：雙方呈伏地挺身姿勢，\n可伸出左手、右手、左腳、右腳或抬頭。\n\n三位壽星在 60 秒內聯手擊敗館主！",
+      answer:"60 秒內三人擊敗館主 → ⭕\n館主撐過 60 秒 → ❌" },
+
+    { id:31, icon:"🍺", category:"速喝競賽",   type:"team",
+      question:"老馮與老鄭聯手派出李岳鴻，\n與壽星中一人進行「速喝」對決！\n\n壽星自行決定派誰出戰。\n最快喝完的一方獲勝！",
+      answer:"壽星方先喝完 → ⭕\n李岳鴻先喝完 → ❌" },
+
+    { id:32, icon:"✋", category:"雙人 5-10-15", type:"team",
+      question:"客隊兩人一組 VS 主隊兩人一組。\n\n規則：\n一人當左手、一人當右手，由右手負責喊數字。\n\n三局兩勝制，壽星隊贏兩輪即得分！",
+      answer:"壽星隊勝兩輪（含）→ ⭕\n客隊勝兩輪 → ❌" },
+
+    { id:33, icon:"🥂", category:"三人交杯",   type:"team",
+      question:"三位壽星：酥酥、師父、劉宇謙\n\n一起舉杯——\n\n三人交杯對飲一杯！\n\n完成即得分 🎉",
+      answer:"三人同時喝完 → ⭕（無條件得分）" },
+
+    { id:34, icon:"💣", category:"酒杯炸彈",   type:"team",
+      question:"主隊三壽星 VS 客隊（李岳鴻、馮國隆、Sunny）交錯坐好。\n\n規則：\n主辦持續出數學題，答對往下傳、答錯繼續作答直到對為止。\n\n音樂停止時，酒杯停在客隊手中 → 主隊獲勝！\n（炸彈在誰手中誰喝）",
+      answer:"音樂停止時酒杯停在客隊 → ⭕\n停在主隊 → ❌" },
+
+    { id:35, icon:"🎵", category:"男生女生配", type:"team",
+      question:"壽星主隊 VS 客隊（Amy、Sunny、李岳鴻）\n\n進行「節奏男生女生配」對決！\n\n主辦擔任裁判，壽星隊獲勝即得分 🎶",
+      answer:"主辦裁判壽星隊勝 → ⭕\n客隊勝 → ❌" },
+
+    { id:36, icon:"🍾", category:"倒酒滿杯", type:"team",
+      question:"三位壽星主隊 VS 客隊三人，雙方交錯排列。\n\n規則：\n輪流互相倒酒，每次只能倒一點點。\n誰的酒杯先溢出，該隊即算失敗！\n\n壽星隊全員撐到最後即得分 🍷",
+      answer:"客隊有人酒杯溢出 → 壽星隊勝 ⭕\n壽星隊有人溢出 → ❌" }
+];
+
+// ════════════════════════════════════════════════
+//               TARGET MAPPING
+// ════════════════════════════════════════════════
+const TARGET_MAP = {
+     1:'酥酥',  2:'師父',  3:'劉宇謙', 4:'團康',
+     5:'師父',  6:'劉宇謙',7:'酥酥',  8:'師父',  9:'劉宇謙',
+    10:'酥酥', 11:'師父', 12:'劉宇謙',13:'酥酥',14:'師父', 15:'酥酥',
+    16:'酥酥', 17:'師父', 18:'劉宇謙',19:'酥酥',20:'師父', 21:'劉宇謙',
+    22:'酥酥', 23:'師父', 24:'劉宇謙',25:'團康',
+    // 競賽題（全部團康）
+    26:'團康', 27:'團康', 28:'團康', 29:'團康', 30:'團康',
+    31:'團康', 32:'團康', 33:'團康', 34:'團康', 35:'團康',
+    36:'團康'
+};
+const TARGET_CLASS = { '酥酥':'ct-susu','師父':'ct-shifu','劉宇謙':'ct-liu','團康':'ct-all' };
+
+// ════════════════════════════════════════════════
+//                 SOUND ENGINE
+// ════════════════════════════════════════════════
+let audioCtx = null;
+let muted = false;
+
+function getCtx(){
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    return audioCtx;
+}
+function tone(freq, type, startAt, dur, vol=0.22){
+    if(muted) return;
+    try{
+        const ctx = getCtx();
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime+startAt);
+        gain.gain.setValueAtTime(vol, ctx.currentTime+startAt);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+startAt+dur);
+        osc.start(ctx.currentTime+startAt);
+        osc.stop(ctx.currentTime+startAt+dur+0.05);
+    }catch(e){}
+}
+function sfxCorrect(){
+    tone(523,'sine',0,.12,.22); tone(659,'sine',.10,.12,.22); tone(784,'sine',.20,.22,.28);
+}
+function sfxWrong(){
+    tone(280,'sawtooth',0,.15,.22); tone(180,'sawtooth',.15,.25,.18);
+}
+function sfxTick(){
+    tone(1000,'square',0,.05,.14);
+}
+function sfxReveal(){
+    tone(400,'sine',0,.08,.18); tone(600,'sine',.07,.08,.18); tone(800,'sine',.14,.14,.2);
+}
+function sfxLine(){
+    [523,587,659,784,880].forEach((f,i)=> tone(f,'sine',i*.07,.2,.28));
+}
+function sfxWin(){
+    [523,523,523,415,466,523,466,523].forEach((f,i,a)=>{
+        const t=[0,.18,.36,.54,.63,.72,.9,1.0];
+        tone(f,'sine',t[i],.2,.32);
+    });
+    tone(261,'triangle',0,1.2,.16);
+    tone(349,'triangle',.5,.7,.16);
+}
+function toggleMute(){
+    muted=!muted;
+    document.getElementById('muteBtn').textContent = muted?'🔇':'🔊';
+}
+
+// ════════════════════════════════════════════════
+//                    TIMER
+// ════════════════════════════════════════════════
+const TIMER_TOTAL = 30;
+const CIRCUMFERENCE = 163.36; // 2π×26
+let timerInterval = null;
+let timerSecs = TIMER_TOTAL;
+
+function startTimer(){
+    timerSecs = TIMER_TOTAL;
+    clearInterval(timerInterval);
+    document.getElementById('timerTimeout').classList.remove('show');
+    document.getElementById('timerWrap').classList.remove('urgent');
+    updateTimerUI();
+    timerInterval = setInterval(()=>{
+        timerSecs--;
+        updateTimerUI();
+        if(timerSecs > 0 && timerSecs <= 5){
+            sfxTick();
+            document.getElementById('timerWrap').classList.add('urgent');
+        }
+        if(timerSecs <= 0){
+            clearInterval(timerInterval); timerInterval=null;
+            document.getElementById('timerTimeout').classList.add('show');
+            revealAnswer();
+        }
+    },1000);
+}
+function stopTimer(){
+    if(timerInterval){ clearInterval(timerInterval); timerInterval=null; }
+}
+function updateTimerUI(){
+    const n = document.getElementById('timerNum');
+    const c = document.getElementById('timerCircle');
+    if(!n||!c) return;
+    const s = Math.max(0,timerSecs);
+    n.textContent = s;
+    c.style.strokeDashoffset = CIRCUMFERENCE*(1-s/TIMER_TOTAL);
+    c.style.stroke = s>15 ? 'var(--ok)' : s>5 ? 'var(--gold)' : 'var(--err)';
+}
+
+// ════════════════════════════════════════════════
+//                  GAME STATE
+// ════════════════════════════════════════════════
+let state = {
+    cells:Array(36).fill(null), current:null,
+    done:0, correct:0, wrong:0,
+    order:[],
+    wrongCounts:{'酥酥':0,'師父':0,'劉宇謙':0}
+};
+
+// ════════════════════════════════════════════════
+//                SCREEN HELPERS
+// ════════════════════════════════════════════════
+function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    const mb = document.getElementById('muteBtn');
+    mb.style.display = (id==='gridScreen'||id==='winScreen') ? 'flex' : 'none';
+}
+
+// ════════════════════════════════════════════════
+//               SHUFFLE & START
+// ════════════════════════════════════════════════
+function shuffle(arr){
+    const a=[...arr];
+    for(let i=a.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+}
+
+// 均勻散布：團康題平均分散在 Grid 中，個人題填滿其餘格子
+function distributeOrder(){
+    const allIdx = [...Array(QUESTIONS.length).keys()];
+    const teamIdx    = shuffle(allIdx.filter(i=>(TARGET_MAP[QUESTIONS[i].id]||'團康')==='團康'));
+    const personalIdx = shuffle(allIdx.filter(i=>(TARGET_MAP[QUESTIONS[i].id]||'團康')!=='團康'));
+
+    const total = QUESTIONS.length;
+    const result = new Array(total).fill(-1);
+
+    // 以等間距 + 小幅隨機偏移，放置團康題
+    const teamCount = teamIdx.length;
+    for(let i=0; i<teamCount; i++){
+        const base   = Math.floor((i + 0.5) * total / teamCount);
+        const jitter = Math.floor(Math.random() * 3) - 1; // ±1 格隨機偏移
+        let pos = Math.max(0, Math.min(total - 1, base + jitter));
+        // 若該格已被佔用，往後找最近空位
+        let tries = 0;
+        while(result[pos] !== -1 && tries < total){ pos = (pos + 1) % total; tries++; }
+        result[pos] = teamIdx[i];
+    }
+
+    // 剩餘格子依序填入個人題
+    let pi = 0;
+    for(let i=0; i<total; i++){
+        if(result[i] === -1) result[i] = personalIdx[pi++];
+    }
+    return result;
+}
+function startGame(){
+    state={
+        cells:Array(36).fill(null), current:null,
+        done:0, correct:0, wrong:0,
+        order:distributeOrder(),
+        wrongCounts:{'酥酥':0,'師父':0,'劉宇謙':0}
+    };
+    stopConfetti(); stopTimer();
+    renderGrid(); updateFailBoard(); showScreen('gridScreen');
+}
+function restartGame(){ startGame(); }
+function goBackGrid(){ stopConfetti(); showScreen('gridScreen'); }
+
+// ════════════════════════════════════════════════
+//                  GRID RENDER
+// ════════════════════════════════════════════════
+function renderGrid(){
+    const grid = document.getElementById('bingoGrid');
+    grid.innerHTML = '';
+    state.order.forEach((qIdx,i)=>{
+        const q = QUESTIONS[qIdx];
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.id = `cell-${i}`;
+        const s = state.cells[i];
+        const tgt = TARGET_MAP[q.id]||'團康';
+        const tc  = TARGET_CLASS[tgt];
+        const flipped = s ? 'flipped' : '';
+        const backCls = s==='correct'?'correct': s==='wrong'?'wrong':'';
+        const mark    = s==='correct'?'⭕': s==='wrong'?'❌':'';
+        cell.innerHTML=`
+            <div class="cell-inner ${flipped}">
+                <div class="cell-front">
+                    <span class="cell-num">${q.id}</span>
+                    <div class="cell-name">${q.category}</div>
+                    <div class="cell-target ${tc}">${tgt}</div>
+                </div>
+                <div class="cell-back ${backCls}">
+                    ${s?`<div class="result-mark">${mark}</div>`:''}
+                </div>
+            </div>`;
+        if(!s) cell.addEventListener('click',()=>openQuestion(i));
+        else   cell.classList.add('answered');
+        grid.appendChild(cell);
+    });
+    updateProgress();
+}
+
+function updateProgress(){
+    document.getElementById('doneCount').textContent    = state.done;
+    document.getElementById('correctCount').textContent = state.correct;
+    document.getElementById('wrongCount').textContent   = state.wrong;
+}
+
+function updateWinHL(){
+    document.querySelectorAll('.grid-cell').forEach((cell,i)=>{
+        cell.classList.toggle('win-hl', state.completedLines.some(ln=>ln.includes(i)));
+    });
+}
+
+// ════════════════════════════════════════════════
+//               OPEN / CLOSE QUESTION
+// ════════════════════════════════════════════════
+function openQuestion(idx){
+    if(state.cells[idx]!==null) return;
+    state.current = idx;
+    const q = QUESTIONS[state.order[idx]];
+
+    // reset UI
+    document.getElementById('qAnsBox').classList.remove('show');
+    document.getElementById('btnReveal').style.display='block';
+    document.getElementById('btnOk').classList.remove('show');
+    document.getElementById('btnNg').classList.remove('show');
+    document.getElementById('qChoices').style.display='none';
+    document.getElementById('qPhotoPH').style.display='none';
+    document.getElementById('qVideoPH').style.display='none';
+    const _img = document.getElementById('qPhotoImg');
+    _img.style.display='none'; _img.src='';
+    document.getElementById('timerTimeout').classList.remove('show');
+    document.getElementById('timerWrap').classList.remove('urgent');
+
+    document.getElementById('qCategory').textContent = `${q.icon} ${q.category}`;
+    document.getElementById('qText').textContent     = q.question;
+    document.getElementById('qAnsText').textContent  = q.answer;
+    document.getElementById('qSpecialBadge').style.display = q.special?'inline-flex':'none';
+
+    const badge = document.getElementById('qTypeBadge');
+    if(q.type==='choice'){
+        badge.textContent='📋 選擇題';
+        const el=document.getElementById('qChoices');
+        el.style.display='grid'; el.innerHTML='';
+        (q.choices||[]).forEach(c=>{
+            const d=document.createElement('div');
+            d.className='q-choice'; d.textContent=c;
+            el.appendChild(d);
+        });
+    }else if(q.type==='photo'){
+        badge.textContent='🖼️ 看圖題';
+        const imgEl  = document.getElementById('qPhotoImg');
+        const imgSrc = (typeof QUESTION_IMAGES!=='undefined') && QUESTION_IMAGES[q.id];
+        if(imgSrc){
+            imgEl.src = imgSrc;
+            imgEl.style.display = 'block';
+            document.getElementById('qPhotoPH').style.display = 'none';
+        } else {
+            imgEl.style.display = 'none';
+            document.getElementById('qPhotoPH').style.display = 'block';
+            document.getElementById('qPhotoPHHint').textContent = q.photoHint||'請插入圖片';
+        }
+    }else if(q.type==='video'){
+        badge.textContent='🎬 影片題';
+        document.getElementById('qVideoPH').style.display='block';
+        document.getElementById('qVideoPHHint').textContent=q.videoHint||'請插入影片';
+    }else if(q.type==='interactive'){
+        badge.textContent='🎮 互動題';
+    }else if(q.type==='team'){
+        badge.textContent='🏆 競賽題';
+    }else{
+        badge.textContent='💬 文字題';
+    }
+
+    document.getElementById('questionOverlay').classList.add('open');
+    startTimer();
+}
+
+function closeQuestion(){
+    stopTimer();
+    document.getElementById('questionOverlay').classList.remove('open');
+    state.current=null;
+}
+
+function revealAnswer(){
+    stopTimer();
+    sfxReveal();
+    document.getElementById('qAnsBox').classList.add('show');
+    document.getElementById('btnReveal').style.display='none';
+    document.getElementById('btnOk').classList.add('show');
+    document.getElementById('btnNg').classList.add('show');
+}
+
+// ════════════════════════════════════════════════
+//                  MARK RESULT
+// ════════════════════════════════════════════════
+function markResult(isCorrect){
+    stopTimer();
+    const idx = state.current;
+
+    // Flip animation — update back face then flip
+    const cell = document.getElementById(`cell-${idx}`);
+    if(cell){
+        const inner = cell.querySelector('.cell-inner');
+        const back  = cell.querySelector('.cell-back');
+        back.innerHTML = `<div class="result-mark">${isCorrect?'⭕':'❌'}</div>`;
+        back.className = `cell-back ${isCorrect?'correct':'wrong'}`;
+        cell.classList.add('answered');
+        setTimeout(()=>inner.classList.add('flipped'), 40);
+    }
+
+    if(isCorrect) sfxCorrect(); else sfxWrong();
+
+    state.cells[idx] = isCorrect?'correct':'wrong';
+    state.done++;
+    if(isCorrect) state.correct++; else state.wrong++;
+
+    // ── 失誤計數 ──
+    if(!isCorrect){
+        const q = QUESTIONS[state.order[idx]];
+        const tgt = TARGET_MAP[q.id]||'團康';
+        if(tgt==='團康'){
+            ['酥酥','師父','劉宇謙'].forEach(p=>state.wrongCounts[p]++);
+        } else {
+            state.wrongCounts[tgt]++;
+        }
+        updateFailBoard();
+    }
+
+    document.getElementById('questionOverlay').classList.remove('open');
+    state.current = null;
+
+    setTimeout(()=>{ updateProgress(); }, 600);
+}
+
+// ════════════════════════════════════════════════
+//                  BINGO CHECK
+// ════════════════════════════════════════════════
+function checkAllLines(){
+    const c = state.cells;
+    const lines = [];
+    for(let r=0;r<5;r++){
+        const ln=[r*5,r*5+1,r*5+2,r*5+3,r*5+4];
+        if(ln.every(i=>c[i]==='correct')) lines.push(ln);
+    }
+    for(let col=0;col<5;col++){
+        const ln=[col,col+5,col+10,col+15,col+20];
+        if(ln.every(i=>c[i]==='correct')) lines.push(ln);
+    }
+    const d1=[0,6,12,18,24], d2=[4,8,12,16,20];
+    if(d1.every(i=>c[i]==='correct')) lines.push(d1);
+    if(d2.every(i=>c[i]==='correct')) lines.push(d2);
+    return lines;
+}
+function descLine(ln){
+    const diff=ln[1]-ln[0];
+    if(diff===1) return `第 ${Math.floor(ln[0]/5)+1} 列橫排`;
+    if(diff===5) return `第 ${(ln[0]%5)+1} 行直排`;
+    if(diff===6) return `左上→右下對角線`;
+    return `右上→左下對角線`;
+}
+
+// ════════════════════════════════════════════════
+//                 FAIL BOARD
+// ════════════════════════════════════════════════
+const FAIL_ID = {'酥酥':'susu','師父':'shifu','劉宇謙':'liu'};
+
+function updateFailBoard(){
+    const counts = state.wrongCounts;
+    const names  = ['酥酥','師父','劉宇謙'];
+    const max    = Math.max(...names.map(k=>counts[k]));
+
+    names.forEach(k=>{
+        const id      = FAIL_ID[k];
+        const countEl = document.getElementById(`failCount-${id}`);
+        const chipEl  = document.getElementById(`failChip-${id}`);
+        if(!countEl||!chipEl) return;
+
+        const prev = parseInt(countEl.textContent)||0;
+        const curr = counts[k];
+
+        countEl.textContent = curr;
+        countEl.classList.toggle('has-err', curr>0);
+        // 失誤最多的人標紅框（至少 1 題才標）
+        chipEl.classList.toggle('worst', curr>0 && curr===max);
+
+        // 數字跳動動畫
+        if(curr > prev){
+            countEl.classList.remove('bump');
+            void countEl.offsetWidth; // force reflow
+            countEl.classList.add('bump');
+            setTimeout(()=>countEl.classList.remove('bump'), 400);
+        }
+    });
+}
+
+// ════════════════════════════════════════════════
+//                  WIN SCREEN
+// ════════════════════════════════════════════════
+function showWin(lines){
+    const el=document.getElementById('winLines');
+    el.innerHTML='';
+    lines.slice(0,3).forEach(ln=>{
+        const chip=document.createElement('div');
+        chip.className='win-chip';
+        chip.textContent=descLine(ln)+' 🏅';
+        el.appendChild(chip);
+    });
+
+    // ── 失誤王計算 ──
+    const counts = state.wrongCounts;
+    const names  = ['酥酥','師父','劉宇謙'];
+    const max    = Math.max(...names.map(k=>counts[k]));
+    const fkBox  = document.getElementById('failKingBox');
+    const fkText = document.getElementById('failKingText');
+
+    if(max > 0){
+        const kings = names.filter(k=>counts[k]===max);
+        const allZero = names.every(k=>counts[k]===0);
+        if(!allZero){
+            fkBox.style.display='block';
+            if(kings.length===1){
+                fkText.textContent=`😈 失誤王：${kings[0]}（共 ${max} 題答錯）`;
+            } else {
+                const detail = kings.map(k=>`${k} ${counts[k]}題`).join('　');
+                fkText.textContent=`😈 失誤並列：${detail}`;
+            }
+        }
+    } else {
+        fkBox.style.display='none';
+    }
+
+    showScreen('winScreen');
+    startConfetti();
+}
+
+// ════════════════════════════════════════════════
+//                   CONFETTI
+// ════════════════════════════════════════════════
+let confettiRAF=null;
+function startConfetti(){
+    const canvas=document.getElementById('confettiCanvas');
+    canvas.style.display='block';
+    canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+    const ctx=canvas.getContext('2d');
+    const colors=['#A855F7','#FBBF24','#34D399','#38BDF8','#F472B6','#6366F1','#F0EDFF'];
+    const parts=Array.from({length:170},()=>({
+        x:Math.random()*canvas.width,
+        y:Math.random()*canvas.height-canvas.height,
+        w:Math.random()*13+5, h:Math.random()*6+4,
+        color:colors[Math.floor(Math.random()*colors.length)],
+        rot:Math.random()*360,
+        vx:(Math.random()-.5)*2, vy:Math.random()*2.5+1.5,
+        vr:(Math.random()-.5)*5,
+        circle:Math.random()>.5
+    }));
+    function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        parts.forEach(p=>{
+            ctx.save();
+            ctx.translate(p.x+p.w/2,p.y+p.h/2);
+            ctx.rotate(p.rot*Math.PI/180);
+            ctx.fillStyle=p.color;
+            if(p.circle){ ctx.beginPath(); ctx.arc(0,0,p.w/2,0,Math.PI*2); ctx.fill(); }
+            else          ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+            ctx.restore();
+            p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+            if(p.y>canvas.height+20){ p.y=-20; p.x=Math.random()*canvas.width; }
+        });
+        confettiRAF=requestAnimationFrame(draw);
+    }
+    draw();
+}
+function stopConfetti(){
+    if(confettiRAF){ cancelAnimationFrame(confettiRAF); confettiRAF=null; }
+    const c=document.getElementById('confettiCanvas');
+    if(c){ c.style.display='none'; c.getContext('2d').clearRect(0,0,c.width,c.height); }
+}
+
+window.addEventListener('resize',()=>{
+    const c=document.getElementById('confettiCanvas');
+    if(c.style.display!=='none'){ c.width=window.innerWidth; c.height=window.innerHeight; }
+});
+</script>
+</body>
+</html>
