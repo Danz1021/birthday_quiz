@@ -473,6 +473,13 @@
             margin:.7rem 0;
             display:block;
         }
+        .q-video{
+            width:100%; max-height:320px;
+            border-radius:var(--r-md);
+            margin:.7rem 0;
+            display:block;
+            background:#000;
+        }
         .q-placeholder{
             background:var(--card); border:2px dashed rgba(255,255,255,.1);
             border-radius:var(--r-md); padding:1.8rem;
@@ -688,6 +695,11 @@
             <div class="ph-label">圖片區域</div>
             <div class="ph-hint" id="qPhotoPHHint"></div>
         </div>
+        <video id="qVideoEl" class="q-video" style="display:none"
+               controls controlsList="nodownload"
+               playsinline preload="metadata">
+            <source src="./trip.mov" type="video/mp4">
+        </video>
         <div id="qVideoPH" class="q-placeholder" style="display:none">
             <div class="ph-icon">🎬</div>
             <div class="ph-label">影片區域</div>
@@ -762,9 +774,9 @@ const QUESTIONS = [
       question:"阿珊的 IG 2025 年貼文中，誰沒有出現正臉？",
       choices:["A．熱狗","B．鴻感","C．老鄭","D．老酥"],
       answer:"B．鴻感" },
-    { id:10, icon:"🎌", category:"共同回憶",  type:"text",
-      question:"高中時期，跟老鄭常討論的那部日劇叫什麼名字？\n男主角叫什麼名字？\n那首經典主題曲是什麼？",
-      answer:"日劇：《求婚大作戰》\n男主角：山下智久\n主題曲：《明日晴》" },
+    { id:10, icon:"🎌", category:"求婚大作戰",  type:"text",
+      question:"老鄭最愛的那部日劇求婚大作戰中，男主角（山下智久）一直不跟女主角告白，貫穿全劇的主因是什麼？\n那首經典的歌叫什麼？",
+      answer:"因為健一直始終覺得有「下一次」機會，在被女主的爺爺說「想說就馬上去說，想做就馬上去做，明天再做的人是笨蛋。」後大徹大悟。\n經典的歌：明日晴" },
     { id:11, icon:"🏖️", category:"共同回憶",  type:"text",
       question:"大學時期去墾丁玩，要去海邊時——\n・是誰開車的？\n・副駕是誰？\n・發生什麼事導致大家都醒了？",
       answer:"開車：師父\n副駕：鄭玄\n事件：轉彎差點衝進別人家裡" },
@@ -783,13 +795,14 @@ const QUESTIONS = [
       question:"（看圖）請依照照片，從左到右說出這五個人的名字\n（不含死豬）",
       photoHint:"請插入對應的團體合照",
       answer:"從左到右：劉 → 鄭 → 蘇 → 熱狗 → 師父" },
-    { id:16, icon:"⚔️", category:"歷史知識",  type:"text",
+    { id:16, icon:"⚔️", category:"歷史知識",  type:"photo",
       question:"・張昭在赤壁之戰前主張什麼策略？\n・諸葛亮口中的「厚顏無恥之徒」，是王朗還是王允？",
+      photoHint:"請插入三國相關圖片",
       answer:"張昭主張：投降曹操\n厚顏無恥之徒：王朗（非王允）" },
     { id:17, icon:"🐱", category:"個人相關",  type:"choice",
       question:"劉宇謙家裡的貓叫什麼名字？",
       choices:["A．肥肥","B．球球","C．咪咪","D．肥仔"],
-      answer:"（主辦方提前確認正確答案後，請填入此處）" },
+      answer:"A．肥肥" },
     { id:18, icon:"🏀", category:"共同回憶",  type:"text",
       question:"國中籃球比賽時——\n・先發上場的五個人是誰？\n・最後贏了幾場？",
       answer:"先發五人：陳世瑜、朱信宇、陳俊翰、劉宇謙、馮國隆\n贏了：2 場" },
@@ -1153,6 +1166,8 @@ function openQuestion(idx){
     document.getElementById('qVideoPH').style.display='none';
     const _img = document.getElementById('qPhotoImg');
     _img.style.display='none'; _img.src='';
+    const _vid = document.getElementById('qVideoEl');
+    if(_vid){ _vid.pause(); _vid.style.display='none'; }
     document.getElementById('timerTimeout').classList.remove('show');
     document.getElementById('timerWrap').classList.remove('urgent');
 
@@ -1186,8 +1201,15 @@ function openQuestion(idx){
         }
     }else if(q.type==='video'){
         badge.textContent='🎬 影片題';
-        document.getElementById('qVideoPH').style.display='block';
-        document.getElementById('qVideoPHHint').textContent=q.videoHint||'請插入影片';
+        const videoEl = document.getElementById('qVideoEl');
+        if(videoEl){
+            videoEl.style.display='block';
+            videoEl.currentTime=0;
+            document.getElementById('qVideoPH').style.display='none';
+        } else {
+            document.getElementById('qVideoPH').style.display='block';
+            document.getElementById('qVideoPHHint').textContent=q.videoHint||'請插入影片';
+        }
     }else if(q.type==='interactive'){
         badge.textContent='🎮 互動題';
     }else if(q.type==='team'){
